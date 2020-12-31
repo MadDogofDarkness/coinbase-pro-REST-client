@@ -20,6 +20,7 @@ def check_filename(filename, logs):
     return False
 
 def load_api_key_info(file_to_load_from):
+    #implement method as needed for pro use
     return {"api-key":"key", "secret_key":"secret================================", "passphrase":"pass"}
 
 class Client_Error(Exception):
@@ -31,8 +32,11 @@ class Client_Error(Exception):
 class MarketClient():
     def __init__(self, config_file):
         self.log = []
+        self.configurationfile = config_file
         if exists('log.json'):
-            # self.log should be a list of log entries used to determine if data requested is too old to be retrieved from cache and must be re-downloaded
+            # self.log should be a list of log entries used to determine if data
+            # requested is too old to be retrieved from cache and must be re-downloaded
+            # After cache is implemented
             with open('log.json', 'r') as f:
                 for line in f:
                     self.log.append(line)
@@ -40,17 +44,14 @@ class MarketClient():
         if type(config_file) is dict:
             d = config_file
         else:
-            with open(config_file, 'r') as f:
-                try:
-                    d = json.load(f)
-                except FileNotFoundError:
-                    print("Error: config file could not be either found, loaded or read.")
+            d = load_api_key_info(config_file)
         
         try:
             print(f"client-key: {d['client-key']}")
             self.config = d
         except KeyError:
-            return "key 'api-key' not found in loaded configuration file"
+            print("")
+            return "key 'client-key' not found in loaded configuration file"
     
     def save(self):
         return False
@@ -59,7 +60,6 @@ class MarketClient():
     def send(self, method, endpoint):
         url_base = ""
         filename = (method + "-" + endpoint + ".json").replace('/', '#')
-
         if endpoint == "live":
             url_base = "https://api.pro.coinbase.com/"
         elif endpoint == "sandbox":
@@ -72,7 +72,7 @@ class MarketClient():
             return Client_Error("An error occurred when processing the client endpoint connection")
         else:
             url = url_base + method
-            auth = CoinbaseExchangeAuth(load_api_key_info("keys.txt")["api-key"], load_api_key_info("keys.txt")["secret_key"], load_api_key_info("keys.txt")["passphrase"])
+            auth = CoinbaseExchangeAuth(load_api_key_info(self.configurationfile)["api-key"], load_api_key_info(self.configurationfile)["secret_key"], load_api_key_info(self.configurationfile)["passphrase"])
             response = False
             
             try:
@@ -97,23 +97,38 @@ def help():
     """
     s = """
         usage:
-        python analyzer.py <methodname> <endpoint>
+        python analyzer.py <methodname> <endpoint> <config>
         
         the method name is the name of the method on the target api you want to call
-        these can be found from the coinbase pro api documentation
-
+            these can be found from the coinbase pro api documentation below:
+            https://docs.pro.coinbase.com/?python#introduction
         the endpoint is the api endpoint to connect to:
             there are two endpoints, a live one and a sandbox one
             the live one will actually trade money, the sandbox lets you test first
-            https://stackoverflow.com/questions/6346492/how-to-stop-a-for-loop
+            by default, the sandbox is the default endpoint
+        
+        the config is a string filename of the configuration file to be used
+            if it is not passed in, a default configuration is used instead
+            note: to use the config file you need to implement logic to return the file's information
+            as a dictionary from the load_api_key_info() method
+
         """
     
     return s
 
+def makekey():
+    ck = ""
+    while len(ck) < 65:
+        ck += choice("0192837465ABCDEF")
+
+    return ck
 
 if __name__ == "__main__":
     environment = "sandbox"
     h = False
+    # update config filename here or pass in command line
+    configfile = {"client-key": makekey()}
+
     if len(argv) < 2:
         h = True
 
@@ -129,12 +144,29 @@ if __name__ == "__main__":
         method = str(argv[1])
     if len(argv) == 3:
         environment = str(argv[2])
+    if len(argv) == 4:
+        configfile = str(argv[3])
+        with open(configfile, 'r') as f:
+            d = json.load(f)
+            try:
+                print(d["client-key"])
+            except KeyError:
+                print("client-key not included in config file")
+                print("automatically generating a new random key")
 
-    ck = ""
-    while len(ck) < 65:
-        ck += choice("0192837465ABCDEF")
 
-    client = MarketClient({"client-key":ck})
+
+
+    client = MarketClient(configfile)
     response = client.send(method, environment)
     sleep(1)
     print(response)
+
+    # tomorrow
+    """
+    implement changes to allow the user to include the filename of their desired config file on the command line,
+    implement caching again
+
+
+
+    """
