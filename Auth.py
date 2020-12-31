@@ -5,6 +5,10 @@ from requests.auth import AuthBase
 class CoinbaseExchangeAuth(AuthBase):
     def __init__(self, api_key, secret_key, passphrase):
         self.api_key = api_key
+        # note this will also probably need to be changed to passphrase in order to pass config in, this just generates
+        # a random secret key for use by the sandbox api
+        # theres a chance it could work without needing to do that though, i'll have to wait till i get an actual
+        # key and config to test with lol
         self.secret_key = base64.b64encode(hashlib.sha1(str.encode(secret_key, 'utf-8')).digest())
         self.passphrase = passphrase
 
