@@ -23,7 +23,10 @@ By default, the client will enforce a second delay before returning the response
 This is just a call to sleep(1) and can be easily removed if desired without impacting functionality.
 
 The fields needed in the config file are:
-api-key, secret_key, and passphrase
+client-key, api-key, secret_key, and passphrase
+
+The client key is a custom key value which can be used to authenticate clients against eachother, if you want to run multiple clients at the same time.
+Eventually this will allow the trading bot I'm working on to function seamlessly with multiple portfolios or keys, to allow for the application of multiple diverse trading strategies simultaneously depending on how you want to configure it as long as you have the capital to back it up.
 
 By default, all requests will go to the sandbox endpoint for their api.
 To make requests to the production API,you will need to create your own api key, and save the necessary credentials for retrieval.
